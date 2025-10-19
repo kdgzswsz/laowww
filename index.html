@@ -3,18 +3,96 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>未完成 测试中</title>
+<title>B站全屏视频播放器</title>
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%; background: black; overflow: hidden;
     font-family: "Microsoft YaHei", sans-serif; color: white; touch-action: pan-y;
   }
 
-  #introVideo {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-    z-index: 1000; transition: opacity 0.6s ease;
+  /* 视频全屏 */
+  #videoWrapper {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;
+    transition: opacity 0.6s ease;
   }
 
+  #videoPlayer {
+    width: 100%; height: 100%; border: none;
+    object-fit: cover;
+  }
+
+  /* 左上角音量按钮 */
+  #volumeBtn {
+    position: fixed; top: 20px; left: 20px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; z-index: 1300;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  #volumeBtn:hover {
+    background: rgba(255,255,255,0.35);
+    transform: scale(1.1);
+  }
+
+  #volumeIcon {
+    font-size: 20px;
+    transition: transform 0.5s linear;
+    display: inline-block;
+  }
+
+  .rotate {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+
+  /* 右侧视频选择栏 */
+  #videoSelector {
+    position: fixed; top: 50%; right: 20px; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 24px;
+    z-index: 1200;
+  }
+
+  .videoBox {
+    width: 180px;   
+    height: 120px;  
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.1);
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .videoBox:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0,255,255,0.7);
+  }
+
+  .videoBox img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 16px;
+  }
+
+  /* 视频自定义进度条 */
+  #progressContainer {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 8px; background: rgba(255,255,255,0.2);
+    border-radius: 4px; z-index: 1400; cursor: pointer;
+  }
+
+  #progressBar {
+    width: 0%; height: 100%; background: #00aaff; border-radius: 4px;
+    transition: width 0.1s linear;
+  }
+
+  /* 主页内容 */
   #mainContent {
     display: none; height: 100vh; text-align: center; background: linear-gradient(135deg, #0f172a, #1e293b);
     animation: fadeIn 0.6s forwards; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -24,46 +102,40 @@
   h1 { padding-top: 20%; font-size: 3em; text-shadow: 0 0 20px #00aaff; }
   a { color: #00aaff; text-decoration: none; font-weight: bold; }
 
-  #soundBtn {
-    position: fixed; top: 18px; right: 18px; z-index: 1200; font-size: 28px; cursor: pointer;
-    color: white; background: rgba(0,0,0,0.35); border-radius: 50%; padding: 10px;
-    transition: background 0.2s, transform 0.5s ease; user-select: none; display: flex;
-    align-items: center; justify-content: center; width: 48px; height: 48px;
-  }
-
-  #soundBtn:active { transform: scale(0.96); }
-  .spin { animation: spin 0.8s linear; }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
   #scrollHint {
-    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
     z-index: 1100; font-size: 16px; color: #fff; animation: hintPulse 2s infinite;
     transition: opacity 0.4s;
   }
 
   @keyframes hintPulse { 0%,100% { opacity: 0.25 } 50% { opacity: 1; transform: translate(-50%, -6px) } }
-
-  /* 进度条 */
-  #progressBar {
-    position: fixed; bottom: 0; left: 0; width: 100%; height: 5px; background: rgba(255,255,255,0.15);
-    z-index: 1101; cursor: pointer;
-  }
-
-  #progress {
-    width: 0%; height: 100%; background: linear-gradient(90deg, #00aaff, #33ffcc);
-    transition: width 0.05s linear;
-  }
 </style>
 </head>
 <body>
-  <video id="introVideo" autoplay muted playsinline preload="auto">
-    <source src="laow1.mp4" type="video/mp4" />
-  </video>
+  <!-- 全屏视频 -->
+  <div id="videoWrapper">
+    <video id="videoPlayer" src="laow1.mp4" autoplay muted playsinline></video>
 
-  <button id="soundBtn">🔇</button>
+    <!-- 左上角音量按钮 -->
+    <div id="volumeBtn"><span id="volumeIcon">🔇</span></div>
+
+    <!-- 右侧视频方块 -->
+    <div id="videoSelector">
+      <div class="videoBox" data-src="laow1.mp4"><img src="thumb1.jpg" alt="印度3a"></div>
+      <div class="videoBox" data-src="laow2.mp4"><img src="thumb2.jpg" alt="黑"></div>
+      <div class="videoBox" data-src="wssp.mp4"><img src="ws.png" alt="视频3"></div>
+      <div class="videoBox" data-src="wssp.mp4"><img src="ws.png" alt="视频4"></div>
+    </div>
+
+    <!-- 视频进度条 -->
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+
   <div id="scrollHint">↓ 下滑进入主页</div>
-  <div id="progressBar"><div id="progress"></div></div>
 
+  <!-- 主页面内容 -->
   <div id="mainContent">
     <h1>欢迎来到 牢www 的官网！</h1>
     <p>我是学生UP主，热爱编程与创作 🎬</p>
@@ -72,109 +144,140 @@
   </div>
 
   <script>
-    const video = document.getElementById('introVideo');
+    const videoWrapper = document.getElementById('videoWrapper');
     const main = document.getElementById('mainContent');
-    const soundBtn = document.getElementById('soundBtn');
     const scrollHint = document.getElementById('scrollHint');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const boxes = document.querySelectorAll('.videoBox');
+    const volumeBtn = document.getElementById('volumeBtn');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
-    const progress = document.getElementById('progress');
 
     let showingMain = false;
     let touchStartY = null;
-    let longPress = false;
-    let pressTimer = null;
-
-    // 默认静音
-    video.muted = true;
-    soundBtn.textContent = '🔇';
-
-    // 更新进度条（丝滑）
-    function updateProgress() {
-      if (!video.duration) return;
-      progress.style.width = (video.currentTime / video.duration * 100) + '%';
-      requestAnimationFrame(updateProgress);
-    }
-    requestAnimationFrame(updateProgress);
-
-    // 拖动进度条
-    function seek(e) {
-      const rect = progressBar.getBoundingClientRect();
-      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      video.currentTime = pos * video.duration;
-    }
-    let dragging = false;
-    progressBar.addEventListener('mousedown', (e) => { dragging = true; seek(e); });
-    window.addEventListener('mousemove', (e) => { if (dragging) seek(e); });
-    window.addEventListener('mouseup', () => dragging = false);
-
-    // 长按加速
-    video.addEventListener('pointerdown', () => {
-      pressTimer = setTimeout(() => { video.playbackRate = 2; longPress = true; }, 300);
-    });
-    video.addEventListener('pointerup', () => {
-      clearTimeout(pressTimer);
-      if (longPress) { video.playbackRate = 1; longPress = false; }
-    });
-
-    // 声音切换
-    soundBtn.addEventListener('click', () => {
-      video.muted = !video.muted;
-      soundBtn.textContent = video.muted ? '🔇' : '🔊';
-      soundBtn.classList.remove('spin'); void soundBtn.offsetWidth; soundBtn.classList.add('spin');
-      if (!video.muted) video.play().catch(()=>{});
-    });
-
-    // 下滑进入主页，上滑返回视频
     const SWIPE_THRESHOLD = 60;
-    window.addEventListener('wheel', (e) => {
-      if (Math.abs(e.deltaY) < 30) return;
-      if (e.deltaY > 0 && !showingMain) showMain();
-      if (e.deltaY < 0 && showingMain && window.scrollY <= 0) showVideo();
-    });
 
-    window.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) touchStartY = e.touches[0].clientY;
-    });
-    window.addEventListener('touchend', (e) => {
-      if (touchStartY === null) return;
-      const diff = e.changedTouches[0].clientY - touchStartY;
-      if (diff < -SWIPE_THRESHOLD && !showingMain) showMain();
-      if (diff > SWIPE_THRESHOLD && showingMain && window.scrollY <= 0) showVideo();
-      touchStartY = null;
-    });
+    // 长按 2倍速播放
+    let isHolding = false;
 
     function showMain() {
-      if (showingMain) return;
+      if(showingMain) return;
       showingMain = true;
       scrollHint.style.opacity = '0';
       setTimeout(()=>scrollHint.style.display='none',400);
-      video.style.opacity = '0';
+      videoWrapper.style.opacity='0';
       setTimeout(()=>{
-        video.pause();
-        video.style.display='none';
-        soundBtn.style.display='none';
-        progressBar.style.display='none';
+        videoWrapper.style.display='none';
         main.style.display='block';
         document.body.style.overflow='auto';
       },500);
     }
 
     function showVideo() {
-      if (!showingMain) return;
+      if(!showingMain) return;
       showingMain = false;
       scrollHint.style.display='block'; scrollHint.style.opacity='1';
       main.style.display='none';
-      video.style.display='block'; soundBtn.style.display='flex'; progressBar.style.display='block';
+      videoWrapper.style.display='flex';
       document.body.style.overflow='hidden';
-      video.play().catch(()=>{});
-      setTimeout(()=>video.style.opacity='1',50);
+      setTimeout(()=>videoWrapper.style.opacity='1',50);
     }
 
-    window.addEventListener('keydown',(e)=>{
-      if(e.key==='ArrowDown'&&!showingMain)showMain();
-      if(e.key==='ArrowUp'&&showingMain&&window.scrollY<=0)showVideo();
+    // 滑动进入主页
+    window.addEventListener('wheel', (e) => {
+      if(Math.abs(e.deltaY) < 30) return;
+      if(e.deltaY > 0 && !showingMain) showMain();
+      if(e.deltaY < 0 && showingMain && window.scrollY <= 0) showVideo();
+    });
+
+    window.addEventListener('touchstart', (e) => { 
+      if(e.touches.length === 1) touchStartY = e.touches[0].clientY; 
+      // 长按 2倍速
+      isHolding = true;
+      videoPlayer.playbackRate = 2;
+    });
+    window.addEventListener('touchend', (e) => {
+      if(touchStartY === null) return;
+      const diff = e.changedTouches[0].clientY - touchStartY;
+      if(diff < -SWIPE_THRESHOLD && !showingMain) showMain();
+      if(diff > SWIPE_THRESHOLD && showingMain && window.scrollY <= 0) showVideo();
+      touchStartY = null;
+      // 结束长按
+      if(isHolding){
+        videoPlayer.playbackRate = 1;
+        isHolding = false;
+      }
+    });
+
+    // 鼠标长按2倍速
+    window.addEventListener('mousedown', ()=>{
+      isHolding = true;
+      videoPlayer.playbackRate = 2;
+    });
+    window.addEventListener('mouseup', ()=>{
+      if(isHolding){
+        videoPlayer.playbackRate = 1;
+        isHolding = false;
+      }
+    });
+
+    // 点击屏幕或空格切换播放/暂停
+    function togglePlay(){
+      if(videoPlayer.paused){
+        videoPlayer.play();
+      } else {
+        videoPlayer.pause();
+      }
+    }
+
+    videoWrapper.addEventListener('click', togglePlay);
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === ' '){
+        e.preventDefault();
+        togglePlay();
+      }
+      if(e.key==='ArrowDown' && !showingMain) showMain();
+      if(e.key==='ArrowUp' && showingMain && window.scrollY<=0) showVideo();
+    });
+
+    // 点击方块切换视频
+    boxes.forEach(box=>{
+      box.addEventListener('click', (e)=>{
+        e.stopPropagation(); // 防止触发全屏点击播放/暂停
+        const src = box.getAttribute('data-src');
+        videoPlayer.src = src;
+        videoPlayer.play();
+      });
+    });
+
+    // 点击音量按钮切换静音/播放旋转动画
+    volumeBtn.addEventListener('click', (e)=>{ 
+      e.stopPropagation();
+      videoPlayer.muted = !videoPlayer.muted;
+      if(videoPlayer.muted){
+        volumeIcon.textContent = '🔇';
+        volumeIcon.classList.remove('rotate');
+      } else {
+        volumeIcon.textContent = '🔊';
+        volumeIcon.classList.add('rotate');
+      }
+    });
+
+    // 视频更新进度条
+    videoPlayer.addEventListener('timeupdate', () => {
+      const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+      progressBar.style.width = percent + '%';
+    });
+
+    // 点击进度条跳转
+    progressContainer.addEventListener('click', (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      const newTime = (clickX / width) * videoPlayer.duration;
+      videoPlayer.currentTime = newTime;
     });
   </script>
 </body>
 </html>
-
